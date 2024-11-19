@@ -9,9 +9,4 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @ComponentScan(basePackages = "com.example.studentmanagement")
 public class AppConfig {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }
