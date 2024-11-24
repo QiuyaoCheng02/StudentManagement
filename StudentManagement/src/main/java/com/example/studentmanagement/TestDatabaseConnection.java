@@ -8,7 +8,7 @@ import java.sql.Statement;
 public class TestDatabaseConnection {
     public static void main(String[] args) {
         try (Connection conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/StudentManagement", "root", "")) {
+                "jdbc:mysql://localhost:3306/StudentManagement", "root", "password")) {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SHOW TABLES;");
             while (rs.next()) {

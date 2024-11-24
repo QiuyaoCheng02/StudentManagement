@@ -19,18 +19,20 @@ public class SecurityConfig {
 //        this.authenticationProvider = authenticationProvider;
 //    }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable()) // 禁用 CSRF
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authenticate").permitAll() // 允许所有用户访问 /authenticate
-                        .anyRequest().authenticated() // 其他请求需要认证
-                )
-                .sessionManagement(session -> session.maximumSessions(1)); // 配置会话管理
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable()) // 禁用 CSRF
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/authenticate").permitAll() // 允许所有用户访问 /authenticate
+            .requestMatchers("/admin/courses").permitAll() // 允许匿名访问 /admin/courses
+            .anyRequest().authenticated() // 其他请求需要认证
+        )
+        .sessionManagement(session -> session.maximumSessions(1)); // 配置会话管理
 
-        return http.build();
-    }
+    return http.build();
+}
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {

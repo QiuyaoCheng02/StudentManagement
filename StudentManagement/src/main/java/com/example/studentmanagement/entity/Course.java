@@ -25,11 +25,11 @@ public class Course {
         this.courseId = course_id;
     }
 
-    public String getcourse_name() {
+    public String getCourseName() {
         return courseName;
     }
 
-    public void setcourse_name(String course_name) {
+    public void setCourseName(String course_name) {
         this.courseName = course_name;
     }
 

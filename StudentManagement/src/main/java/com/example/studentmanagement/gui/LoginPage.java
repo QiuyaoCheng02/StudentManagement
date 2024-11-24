@@ -1,50 +1,112 @@
 package com.example.studentmanagement.gui;
 
 import org.json.JSONObject;
-
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.awt.event.*;
+import java.io.*;
+import java.net.*;
 
 public class LoginPage extends JFrame {
-    private JTextField userIdField;  // 这里改为使用 userId
+    private JTextField userIdField;
     private JPasswordField passwordField;
+    private JLabel userIdErrorField, passwordErrorField, loginErrorField;
 
     public LoginPage() {
         setTitle("Login Page");
+        setLayout(new GridBagLayout());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 200);
-        setLayout(new GridLayout(3, 2));
-
-        // userId label and field (修改为 userId)
-        JLabel userIdLabel = new JLabel("User ID:");
-        userIdField = new JTextField();
-        add(userIdLabel);
-        add(userIdField);
-
-        // Password label and field
-        JLabel passwordLabel = new JLabel("Password:");
-        passwordField = new JPasswordField();
-        add(passwordLabel);
-        add(passwordField);
-
-        // Login button
-        JButton loginButton = new JButton("Login");
-        add(new JLabel()); // Placeholder for layout alignment
-        add(loginButton);
-
-        // Add ActionListener to login button
-        loginButton.addActionListener(new LoginActionListener());
-
-        setLocationRelativeTo(null);
+        setSize(600, 400);
+        initializeComponents();
+        setLocationRelativeTo(null); // Center the window
         setVisible(true);
+    }
+
+    private void initializeComponents() {
+        // Fonts
+        Font labelFont = new Font("Arial", Font.PLAIN, 18);
+        Font hintFont = new Font("Arial", Font.PLAIN, 14);
+
+        // Layout constraints
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        // Title
+        JLabel pageLabel = new JLabel("Login to Your Account");
+        pageLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        add(pageLabel, gbc);
+
+        // User ID Label
+        JLabel userIdLabel = new JLabel("User ID:");
+        userIdLabel.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        add(userIdLabel, gbc);
+
+        // User ID Field
+        userIdField = new JTextField(15);
+        userIdField.setFont(labelFont);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        add(userIdField, gbc);
+
+        // User ID Error Field
+        userIdErrorField = new JLabel(" ");
+        userIdErrorField.setFont(hintFont);
+        userIdErrorField.setForeground(Color.RED);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        add(userIdErrorField, gbc);
+
+        // Password Label
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.anchor = GridBagConstraints.EAST;
+        add(passwordLabel, gbc);
+
+        // Password Field
+        passwordField = new JPasswordField(15);
+        passwordField.setFont(labelFont);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.anchor = GridBagConstraints.WEST;
+        add(passwordField, gbc);
+
+        // Password Error Field
+        passwordErrorField = new JLabel(" ");
+        passwordErrorField.setFont(hintFont);
+        passwordErrorField.setForeground(Color.RED);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        add(passwordErrorField, gbc);
+
+        // Login Button
+        JButton loginButton = new JButton("Login");
+        loginButton.setFont(new Font("Arial", Font.BOLD, 18));
+        loginButton.addActionListener(new LoginActionListener());
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(loginButton, gbc);
+
+        // Login Error Field
+        loginErrorField = new JLabel(" ");
+        loginErrorField.setFont(hintFont);
+        loginErrorField.setForeground(Color.RED);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 2;
+        add(loginErrorField, gbc);
     }
 
     /**
@@ -53,16 +115,24 @@ public class LoginPage extends JFrame {
     private class LoginActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // 获取 userId 输入的值，转换为 Integer 类型
+            // Reset error messages
+            userIdErrorField.setText(" ");
+            passwordErrorField.setText(" ");
+            loginErrorField.setText(" ");
+
             Integer userId = null;
             try {
-                userId = Integer.parseInt(userIdField.getText());  // 转换为 Integer
+                userId = Integer.parseInt(userIdField.getText().trim());
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(LoginPage.this, "Invalid User ID format.");
-                return;  // 如果转换失败，退出该方法
+                userIdErrorField.setText("Invalid User ID format.");
+                return;
             }
 
-            String password = new String(passwordField.getPassword());
+            String password = new String(passwordField.getPassword()).trim();
+            if (password.isEmpty()) {
+                passwordErrorField.setText("Password cannot be empty.");
+                return;
+            }
 
             try {
                 URL url = new URL("http://localhost:8080/authenticate");
@@ -93,13 +163,11 @@ public class LoginPage extends JFrame {
                         new StudentDashboard();
                     }
                 } else {
-                    // If response code is not 200, handle error and avoid reading input stream
-                    System.err.println("Error response: " + responseCode);
-                    JOptionPane.showMessageDialog(LoginPage.this, "Invalid Credentials. Response code: " + responseCode);
+                    loginErrorField.setText("Invalid Credentials. Response code: " + responseCode);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(LoginPage.this, "Error connecting to server.");
+                loginErrorField.setText("Error connecting to server.");
             }
         }
 
@@ -112,24 +180,14 @@ public class LoginPage extends JFrame {
                     response.append(responseLine.trim());
                 }
 
-                // 打印后端返回内容，用于调试
-                System.out.println("Response from server: " + response);
-
-                // 检查是否是 JSON 格式
-                if (!response.toString().startsWith("{")) {
-                    throw new IllegalStateException("Unexpected response format: " + response);
-                }
-
-                // 解析 JSON 响应
+                // Parse JSON response
                 JSONObject jsonObject = new JSONObject(response.toString());
                 return jsonObject.getString("role");
             }
         }
     }
 
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(LoginPage::new);
     }
 }
-
