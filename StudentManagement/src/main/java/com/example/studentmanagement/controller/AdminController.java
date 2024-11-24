@@ -1,5 +1,4 @@
 package com.example.studentmanagement.controller;
-import org.springframework.web.bind.annotation.*;
 
 import com.example.studentmanagement.entity.Course;
 import com.example.studentmanagement.repository.CourseRepository;

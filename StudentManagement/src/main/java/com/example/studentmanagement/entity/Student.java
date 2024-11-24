@@ -21,7 +21,7 @@ public class Student {
 
     @OneToOne
     @JoinColumn(name = "student_id", referencedColumnName = "user_id")
-    private User user;
+    private UserEntity user;
 
     // Getters and Setters
     public int getStudentID() {
@@ -57,11 +57,11 @@ public class Student {
     }
 
 
-    public User getUser() {
+    public UserEntity getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(UserEntity user) {
         this.user = user;
     }
 }

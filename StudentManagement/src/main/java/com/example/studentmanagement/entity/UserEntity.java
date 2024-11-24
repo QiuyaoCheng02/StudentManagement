@@ -3,20 +3,21 @@ package com.example.studentmanagement.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "users") // 对应数据库表名
+public class UserEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "user_id") // 数据库字段名为 user_id
     private Integer userId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true) // 数据库字段名为 username
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // 数据库字段名为 password
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // 数据库字段名为 role
     private String role;
 
     // Getters and Setters
@@ -24,8 +25,8 @@ public class User {
         return userId;
     }
 
-    public void setUserID(int userID) {
-        this.userId = userID;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getUsername() {
@@ -52,4 +53,3 @@ public class User {
         this.role = role;
     }
 }
-

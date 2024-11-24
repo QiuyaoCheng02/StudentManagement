@@ -1,5 +1,6 @@
 package com.example.studentmanagement.gui;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import javax.swing.*;
 import java.awt.*;
@@ -8,9 +9,9 @@ import java.io.*;
 import java.net.*;
 
 public class LoginPage extends JFrame {
-    private JTextField userIdField;
+    private JTextField userNameField;
     private JPasswordField passwordField;
-    private JLabel userIdErrorField, passwordErrorField, loginErrorField;
+    private JLabel userNameErrorField, passwordErrorField, loginErrorField;
 
     public LoginPage() {
         setTitle("Login Page");
@@ -41,29 +42,29 @@ public class LoginPage extends JFrame {
         add(pageLabel, gbc);
 
         // User ID Label
-        JLabel userIdLabel = new JLabel("User ID:");
-        userIdLabel.setFont(labelFont);
+        JLabel userNameLabel = new JLabel("Username:");
+        userNameLabel.setFont(labelFont);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        add(userIdLabel, gbc);
+        add(userNameLabel, gbc);
 
         // User ID Field
-        userIdField = new JTextField(15);
-        userIdField.setFont(labelFont);
+        userNameField = new JTextField(15);
+        userNameField.setFont(labelFont);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        add(userIdField, gbc);
+        add(userNameField, gbc);
 
         // User ID Error Field
-        userIdErrorField = new JLabel(" ");
-        userIdErrorField.setFont(hintFont);
-        userIdErrorField.setForeground(Color.RED);
+        userNameErrorField = new JLabel(" ");
+        userNameErrorField.setFont(hintFont);
+        userNameErrorField.setForeground(Color.RED);
         gbc.gridx = 1;
         gbc.gridy = 2;
-        add(userIdErrorField, gbc);
+        add(userNameErrorField, gbc);
 
         // Password Label
         JLabel passwordLabel = new JLabel("Password:");
@@ -115,20 +116,17 @@ public class LoginPage extends JFrame {
     private class LoginActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Reset error messages
-            userIdErrorField.setText(" ");
+            userNameErrorField.setText(" ");
             passwordErrorField.setText(" ");
             loginErrorField.setText(" ");
 
-            Integer userId = null;
-            try {
-                userId = Integer.parseInt(userIdField.getText().trim());
-            } catch (NumberFormatException ex) {
-                userIdErrorField.setText("Invalid User ID format.");
+            String username = userNameField.getText().trim();
+            String password = new String(passwordField.getPassword()).trim();
+
+            if (username.isEmpty()) {
+                userNameErrorField.setText("Username cannot be empty.");
                 return;
             }
-
-            String password = new String(passwordField.getPassword()).trim();
             if (password.isEmpty()) {
                 passwordErrorField.setText("Password cannot be empty.");
                 return;
@@ -141,17 +139,20 @@ public class LoginPage extends JFrame {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                // Prepare JSON request body
-                String jsonInputString = "{\"userId\":" + userId + ",\"password\":\"" + password + "\"}";
+                // 准备 JSON 请求体
+                String jsonInputString = "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
+                System.out.println("Sending request: " + jsonInputString);
+                System.out.println("Request URL: " + url);
+
+                System.out.println("Username: " + username);
+                System.out.println("Password: " + password);
+
                 try (OutputStream os = connection.getOutputStream()) {
                     byte[] input = jsonInputString.getBytes("utf-8");
                     os.write(input, 0, input.length);
                 }
 
-                System.out.println("Sending request to server...");
                 int responseCode = connection.getResponseCode();
-                System.out.println("Response code: " + responseCode);
-
                 if (responseCode == 200) {
                     String role = getRoleFromResponse(connection);
                     JOptionPane.showMessageDialog(LoginPage.this, "Login Successful!");
@@ -163,7 +164,7 @@ public class LoginPage extends JFrame {
                         new StudentDashboard();
                     }
                 } else {
-                    loginErrorField.setText("Invalid Credentials. Response code: " + responseCode);
+                    loginErrorField.setText("Invalid credentials. Response code: " + responseCode);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -171,7 +172,6 @@ public class LoginPage extends JFrame {
             }
         }
 
-        // Parse the user's role from the server's JSON response
         private String getRoleFromResponse(HttpURLConnection connection) throws Exception {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
                 StringBuilder response = new StringBuilder();
@@ -180,11 +180,23 @@ public class LoginPage extends JFrame {
                     response.append(responseLine.trim());
                 }
 
-                // Parse JSON response
+                // 打印服务器返回的内容
+                System.out.println("Response from server: " + response.toString());
+
+                // 检查响应是否是 JSON 格式
+                if (!response.toString().startsWith("{")) {
+                    throw new IllegalStateException("Unexpected response format: " + response.toString());
+                }
+
                 JSONObject jsonObject = new JSONObject(response.toString());
                 return jsonObject.getString("role");
+            } catch (IOException | JSONException ex) {
+                // 捕获异常并打印错误信息
+                ex.printStackTrace();
+                throw new IllegalStateException("Failed to parse response. Please check server configuration.");
             }
         }
+
     }
 
     public static void main(String[] args) {
