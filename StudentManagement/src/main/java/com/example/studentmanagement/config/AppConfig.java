@@ -6,7 +6,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.example.studentmanagement.gui.AuthenticationService;
+import com.example.studentmanagement.gui.LoginPage;
+
 @Configuration
-@ComponentScan(basePackages = "com.example.studentmanagement")
 public class AppConfig {
+  
 }
+
+
