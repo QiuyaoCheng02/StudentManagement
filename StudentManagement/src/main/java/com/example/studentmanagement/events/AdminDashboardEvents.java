@@ -1,21 +1,14 @@
 package com.example.studentmanagement.events;
 import javax.swing.*;
 
-import com.example.studentmanagement.entity.Course;
-import com.example.studentmanagement.gui.AdminDashboard;
-import com.example.studentmanagement.gui.CoursesManagementPage;
-import com.example.studentmanagement.gui.LoginPage;
-import com.example.studentmanagement.repository.CourseRepository;
-import org.springframework.stereotype.Component;
+import com.example.studentmanagement.gui.Admin.AdminDashboard;
+import com.example.studentmanagement.gui.Admin.CoursesManagementPage;
+
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Base64;
-import java.util.List;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -23,30 +16,56 @@ import java.net.URL;
 
 public class AdminDashboardEvents implements ActionListener {
     private final AdminDashboard adminDashboard;
+    private final String sessionId;
 
-    public AdminDashboardEvents(AdminDashboard adminDashboard) {
+    public AdminDashboardEvents(AdminDashboard adminDashboard, String sessionId) {
         this.adminDashboard = adminDashboard;
+        this.sessionId = sessionId;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // 获取触发事件的按钮
         JButton button = (JButton) e.getSource();
         String buttonText = button.getText();
 
-        if ("Courses Management".equals(buttonText)) {
-            openCoursesManagement();
+        // 根据按钮文字决定操作
+        if ("Courses Management".equals(button.getText())) {
+            String jsonResponse = fetchCoursesFromServer(); // 获取课程数据
+            if (jsonResponse != null) {
+                new CoursesManagementPage(jsonResponse, sessionId); // 打开课程管理页面
+            }
+        }else if ("Students Management".equals(buttonText)) {
+            JOptionPane.showMessageDialog(adminDashboard, "Students Management is not implemented yet.");
+        } else if ("Back".equals(buttonText)) {
+            adminDashboard.dispose(); // 关闭 AdminDashboard
+            JOptionPane.showMessageDialog(null, "Returning to previous menu.");
+        } else if ("Logout".equals(buttonText)) {
+            JOptionPane.showMessageDialog(null, "Logged out successfully.");
+            System.exit(0); // 退出程序
+        } else {
+            JOptionPane.showMessageDialog(adminDashboard, "Unknown action: " + buttonText);
         }
     }
-    private void openCoursesManagement() {
+
+    private String fetchCoursesFromServer() {
         try {
             URL url = new URL("http://localhost:8080/admin/courses");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
     
-            // 添加 Basic Auth 认证
-            String auth = "username:password"; // 替换为真实的用户名和密码
-            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
-            connection.setRequestProperty("Authorization", "Basic " + encodedAuth);
+            // 设置 Cookie，包含 sessionId
+            if (sessionId != null) {
+                connection.setRequestProperty("Cookie", sessionId);
+                System.out.println("Sending sessionId: " + sessionId);
+            } else {
+                System.out.println("Session ID is null!");
+            }
+    
+            // 打印请求头
+            connection.getRequestProperties().forEach((key, value) -> {
+                System.out.println(key + ": " + value);
+            });
     
             int responseCode = connection.getResponseCode();
             if (responseCode == 200) {
@@ -57,15 +76,15 @@ public class AdminDashboardEvents implements ActionListener {
                         response.append(line.trim());
                     }
                 }
-    
-                new CoursesManagementPage(response.toString());
+                return response.toString();
             } else {
                 JOptionPane.showMessageDialog(null, "Failed to fetch courses. Response code: " + responseCode);
+                return null;
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error fetching courses: " + ex.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error fetching courses: " + e.getMessage());
+            return null;
         }
     }
-    
 }

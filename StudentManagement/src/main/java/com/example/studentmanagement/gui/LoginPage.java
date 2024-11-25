@@ -2,6 +2,11 @@ package com.example.studentmanagement.gui;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.example.studentmanagement.events.AdminDashboardEvents;
+import com.example.studentmanagement.gui.Admin.AdminDashboard;
+import com.example.studentmanagement.gui.Admin.CoursesManagementPage;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -9,6 +14,7 @@ import java.io.*;
 import java.net.*;
 
 public class LoginPage extends JFrame {
+    private String sessionId;
     private JTextField userNameField;
     private JPasswordField passwordField;
     private JLabel userNameErrorField, passwordErrorField, loginErrorField;
@@ -140,13 +146,12 @@ public class LoginPage extends JFrame {
                 connection.setDoOutput(true);
 
                 // 准备 JSON 请求体
-                String jsonInputString = "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
-                System.out.println("Sending request: " + jsonInputString);
-                System.out.println("Request URL: " + url);
+                JSONObject json = new JSONObject();
+                json.put("username", username);
+                json.put("password", password);
+                String jsonInputString = json.toString();
 
-                System.out.println("Username: " + username);
-                System.out.println("Password: " + password);
-
+      
                 try (OutputStream os = connection.getOutputStream()) {
                     byte[] input = jsonInputString.getBytes("utf-8");
                     os.write(input, 0, input.length);
@@ -154,49 +159,51 @@ public class LoginPage extends JFrame {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == 200) {
-                    String role = getRoleFromResponse(connection);
-                    JOptionPane.showMessageDialog(LoginPage.this, "Login Successful!");
-
-                    dispose();
-                    if ("ROLE_ADMIN".equals(role)) {
-                        new AdminDashboard();
-                    } else if ("ROLE_STUDENT".equals(role)) {
-                        new StudentDashboard();
+                    // 提取 JSESSIONID
+                    String setCookie = connection.getHeaderField("Set-Cookie");
+                    if (setCookie != null && setCookie.contains("JSESSIONID")) {
+                        sessionId = setCookie.split(";")[0]; // 提取 JSESSIONID
+                        System.out.println("Login Page Session ID: " + sessionId);
+                    } else {
+                        System.out.println("No Session ID received.");
                     }
-                } else {
-                    loginErrorField.setText("Invalid credentials. Response code: " + responseCode);
-                }
-            } catch (Exception ex) {
+                
+                    // 读取服务器返回的 JSON 响应
+                    StringBuilder response = new StringBuilder();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                        String responseLine;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                    }
+                
+                    String jsonResponse = response.toString();
+                    System.out.println("JSON Response: " + jsonResponse);
+                
+                    // 提取角色信息
+                    String role = getRoleFromResponse(jsonResponse);
+                
+                    JOptionPane.showMessageDialog(LoginPage.this, "Login Successful!");
+                
+                    dispose(); // 关闭登录窗口
+                
+                    // 根据角色跳转到相应的 Dashboard，并传递 sessionId
+                    if ("ROLE_ADMIN".equals(role)) {
+                        new AdminDashboard(sessionId);
+                    } else if ("ROLE_STUDENT".equals(role)) {
+                        //new StudentDashboard(sessionId);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Unknown role: " + role);
+                    }}
+                } catch (Exception ex) {
                 ex.printStackTrace();
                 loginErrorField.setText("Error connecting to server.");
             }
         }
 
-        private String getRoleFromResponse(HttpURLConnection connection) throws Exception {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-                StringBuilder response = new StringBuilder();
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-
-                // 打印服务器返回的内容
-                System.out.println("Response from server: " + response.toString());
-
-                // 检查响应是否是 JSON 格式
-                if (!response.toString().startsWith("{")) {
-                    throw new IllegalStateException("Unexpected response format: " + response.toString());
-                }
-
-                JSONObject jsonObject = new JSONObject(response.toString());
-                return jsonObject.getString("role");
-            } catch (IOException | JSONException ex) {
-                // 捕获异常并打印错误信息
-                ex.printStackTrace();
-                throw new IllegalStateException("Failed to parse response. Please check server configuration.");
-            }
+        private String getRoleFromResponse(String jsonResponse) throws Exception {
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+            return jsonObject.getString("role"); // 从 JSON 中提取角色信息
         }
-
-    }
-
+    }        
 }

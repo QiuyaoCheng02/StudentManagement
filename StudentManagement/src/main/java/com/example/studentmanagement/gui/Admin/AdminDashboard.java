@@ -1,4 +1,4 @@
-package com.example.studentmanagement.gui;
+package com.example.studentmanagement.gui.Admin;
 
 import javax.swing.*;
 
@@ -20,8 +20,10 @@ import java.util.List;
 public class AdminDashboard extends JFrame {
     private JLabel titleLabel;
     private JButton courseBtn, studentBtn, backButton, logoutButton;
+    private final String sessionId;
 
-    public AdminDashboard() {
+    public AdminDashboard(String sessionId) {
+        this.sessionId = sessionId; 
         setTitle("Admin Dashboard");
         setLayout(new GridBagLayout());
         setAdminPageJPanel();
@@ -31,7 +33,7 @@ public class AdminDashboard extends JFrame {
     }
 
     private void setAdminPageJPanel() {
-        AdminDashboardEvents adminDashboardEvents = new AdminDashboardEvents(this);
+        AdminDashboardEvents adminDashboardEvents = new AdminDashboardEvents(this,sessionId);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.CENTER;
